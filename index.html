@@ -75,6 +75,29 @@ const ease = {
   sine:  p => -(Math.cos(Math.PI * p) - 1) / 2,
   linear: p => p,
 };
+// Kubische Bézier-Kurve wie in CSS: weicher Anlauf, langer, sanfter Auslauf
+function bezier(x1, y1, x2, y2) {
+  const cx = 3 * x1, bx = 3 * (x2 - x1) - cx, ax = 1 - cx - bx;
+  const cy = 3 * y1, by = 3 * (y2 - y1) - cy, ay = 1 - cy - by;
+  const X = t => ((ax * t + bx) * t + cx) * t, Y = t => ((ay * t + by) * t + cy) * t;
+  const dX = t => (3 * ax * t + 2 * bx) * t + cx;
+  return p => {
+    let t = p;
+    for (let i = 0; i < 6; i++) { const d = dX(t); if (Math.abs(d) < 1e-6) break; t -= (X(t) - p) / d; }
+    return Y(Math.min(1, Math.max(0, t)));
+  };
+}
+ease.organic = bezier(.42, 0, .18, 1);
+ease.drift = bezier(.35, 0, .25, 1);
+
+// Bewegungscharakter – hier lässt sich das „Gefühl“ zentral nachjustieren
+const FEEL = {
+  tempo: 1.35,        // > 1 = alles langsamer
+  jitterDelay: 450,   // ms Zufallsversatz pro Zeiger
+  jitterDur: .14,     // ± Anteil Zufallsstreuung der Dauer
+  overshoot: 5,       // Grad, die ein Zeiger über das Ziel hinausschwingt (max.)
+};
+const rand = (a, b) => a + Math.random() * (b - a);
 
 // ─── Zustand der Zeiger ───────────────────────────────────────────────────
 const clocks = [];
@@ -89,7 +112,11 @@ function updateHands(now) {
     for (const h of hs) {
       const t = h.tw; if (!t || now < t.t0) continue;
       const p = Math.min(1, (now - t.t0) / t.dur);
-      h.a = t.from + (t.to - t.from) * t.ease(p);
+      const delta = t.to - t.from;
+      // weiches Überschwingen kurz vor dem Ziel, das wieder zurückpendelt
+      const ov = Math.min(FEEL.overshoot, Math.abs(delta) * .04) * Math.sign(delta);
+      const bump = p > .62 ? Math.sin(Math.PI * (p - .62) / .38) * Math.pow(1 - p, .6) * 1.6 : 0;
+      h.a = t.from + delta * t.ease(p) + ov * bump;
       if (p >= 1) { h.a = mod(t.to, 360); h.tw = null; }
     }
   });
@@ -97,8 +124,16 @@ function updateHands(now) {
 
 const sleep = ms => new Promise(res => setTimeout(res, ms));
 
+// Dauer und Startzeit pro Zeiger mit Tempo und Zufallsstreuung versehen
+function timing(dur, delayMs, jitter) {
+  const j = jitter ?? 1;
+  const d = dur * FEEL.tempo * (1 + rand(-FEEL.jitterDur, FEEL.jitterDur) * j);
+  const st = delayMs * FEEL.tempo + rand(0, FEEL.jitterDelay) * j;
+  return [d, st];
+}
+
 // Zielposition anfahren. fn(r,c) → [winkel0, winkel1] oder null
-function move(fn, { dur = 2000, delay = () => 0, dir = 'short', turns = 0, easing = ease.inOut } = {}) {
+function move(fn, { dur = 2000, delay = () => 0, dir = 'short', turns = 0, easing = ease.organic, jitter } = {}) {
   const now = performance.now(); let end = now;
   forEachClock((r, c, hs) => {
     let t = fn(r, c); if (!t) return;
@@ -114,22 +149,24 @@ function move(fn, { dur = 2000, delay = () => 0, dir = 'short', turns = 0, easin
       if (d === 'cw') delta = mod(to - h.a, 360) + 360 * turns;
       else if (d === 'ccw') delta = -mod(h.a - to, 360) - 360 * turns;
       else delta = shortDelta(h.a, to) + Math.sign(shortDelta(h.a, to) || 1) * 360 * turns;
-      const st = now + delay(r, c, k);
-      h.tw = { from: h.a, to: h.a + delta, t0: st, dur, ease: easing };
-      end = Math.max(end, st + dur);
+      const [dd, sd] = timing(dur, delay(r, c, k), jitter);
+      const st = now + sd;
+      h.tw = { from: h.a, to: h.a + delta, t0: st, dur: dd, ease: easing };
+      end = Math.max(end, st + dd);
     });
   });
   return sleep(end - now);
 }
 
 // Relativ drehen. fn(r,c,k) → Grad (positiv = im Uhrzeigersinn)
-function spin(fn, { dur = 3000, delay = () => 0, easing = ease.inOut } = {}) {
+function spin(fn, { dur = 3000, delay = () => 0, easing = ease.drift, jitter } = {}) {
   const now = performance.now(); let end = now;
   forEachClock((r, c, hs) => hs.forEach((h, k) => {
     const delta = fn(r, c, k); if (!delta) return;
-    const st = now + delay(r, c, k);
-    h.tw = { from: h.a, to: h.a + delta, t0: st, dur, ease: easing };
-    end = Math.max(end, st + dur);
+    const [dd, sd] = timing(dur, delay(r, c, k), jitter);
+    const st = now + sd;
+    h.tw = { from: h.a, to: h.a + delta, t0: st, dur: dd, ease: easing };
+    end = Math.max(end, st + dd);
   }));
   return sleep(end - now);
 }
@@ -168,9 +205,14 @@ function timeLayout(date = new Date()) {
   return grid;
 }
 
+// Uhrzeit wächst von der Mitte nach außen heraus; der zweite Zeiger folgt dem ersten etwas verzögert
 const showTime = (opts = {}) => {
   const g = timeLayout();
-  return move((r, c) => g[r][c], { dur: 2600, delay: (r, c) => c * 30, ...opts });
+  return move((r, c) => g[r][c], {
+    dur: 4200, dir: 'cw',
+    delay: (r, c, k) => dist(r, c) * 260 + k * 380,
+    ...opts,
+  });
 };
 
 // ─── Choreografien ────────────────────────────────────────────────────────
@@ -187,7 +229,7 @@ const CHOREOS = {
   },
   Wirbel: async () => {
     await move((r, c) => { const t = toCenter(r, c) + 90; return [t, t + 180]; }, { dur: 2200 });
-    await spin(() => 720, { dur: 6000, delay: (r, c) => dist(r, c) * 180, easing: ease.sine });
+    await spin(() => 720, { dur: 6000, delay: (r, c) => dist(r, c) * 180 });
     await move((r, c) => { const t = toCenter(r, c); return [t, t + 180]; }, { dur: 2500, delay: (r, c) => dist(r, c) * 120 });
   },
   Diagonalen: async () => {
@@ -199,11 +241,11 @@ const CHOREOS = {
   },
   Blüte: async () => {
     await move((r, c) => { const t = toCenter(r, c); return [t, t]; }, { dur: 2200 });
-    await spin((r, c, k) => k ? -720 : 720, { dur: 6500, delay: (r, c) => dist(r, c) * 220, easing: ease.sine });
+    await spin((r, c, k) => k ? -720 : 720, { dur: 6500, delay: (r, c) => dist(r, c) * 220 });
   },
   Schere: async () => {
     await move(() => [0, 0], { dur: 2000, delay: (r, c) => r * 60 });
-    await spin(() => 1080, { dur: 7000, delay: (r, c, k) => r * 90 + c * 40 + k * 700, easing: ease.sine });
+    await spin(() => 1080, { dur: 7000, delay: (r, c, k) => r * 90 + c * 40 + k * 700 });
   },
 };
 const CHOREO_NAMES = Object.keys(CHOREOS);
@@ -216,7 +258,7 @@ const statusEl = document.getElementById('status');
 async function waitUntil(pred) { while (!pred() && !forced) await sleep(100); }
 
 async function run() {
-  await showTime({ dur: 3000 });
+  await showTime({ dur: 3500 });
   while (true) {
     const sec = () => new Date().getSeconds();
     if (settings.mode === 'aktiv') await waitUntil(() => sec() >= 33);
