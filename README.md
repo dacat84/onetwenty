@@ -10,7 +10,7 @@ Inspiriert von *A million Times* von [Humans since 1982](https://www.humanssince
 
 - Raster aus 8 × 18 = 144 Uhren mit je zwei Zeigern
 - Die Zeiger formen die aktuelle Uhrzeit (HH:MM) in einer Konturschrift: jede Ziffer ist der Umriss eines 3 × 5-Pixel-Bitmaps, daher braucht jede Uhr genau zwei Zeiger
-- Zwischendurch laufen Choreografien: Welle, Wirbel, Diagonalen, Blüte, Schere
+- Zwischendurch laufen Choreografien: Schwarm, Kaleidoskop, Strömung, Atem (kontinuierliche Strömungsfelder mit Perlin-Rauschen) sowie Welle, Wirbel, Diagonalen, Blüte, Schere
 
 ## Modi
 

@@ -115,8 +115,9 @@ const forEachClock = fn => { for (let r = 0; r < ROWS; r++) for (let c = 0; c < 
 
 function updateHands(now) {
   forEachClock((r, c, hs) => {
-    for (const h of hs) {
-      const t = h.tw; if (!t || now < t.t0) continue;
+    hs.forEach((h, k) => {
+      if (h.field) return updateField(h, r, c, k, now);
+      const t = h.tw; if (!t || now < t.t0) return;
       const p = Math.min(1, (now - t.t0) / t.dur);
       const delta = t.to - t.from;
       // weiches Überschwingen kurz vor dem Ziel, das wieder zurückpendelt
@@ -124,9 +125,53 @@ function updateHands(now) {
       const bump = p > .62 ? Math.sin(Math.PI * (p - .62) / .38) * Math.pow(1 - p, .6) * 1.6 : 0;
       h.a = t.from + delta * t.ease(p) + ov * bump;
       if (p >= 1) { h.a = mod(t.to, 360); h.tw = null; }
-    }
+    });
   });
 }
+
+// ─── Strömungsfelder ──────────────────────────────────────────────────────
+// Statt von A nach B zu fahren, folgt jeder Zeiger einer Funktion fn(r, c, k, t),
+// die sich stetig mit der Zeit verändert. Weiches Einblenden am Anfang, Abbremsen am Ende.
+function updateField(h, r, c, k, now) {
+  const f = h.field, e = now - f.t0; if (e < 0) return;
+  const E = Math.min(e, f.dur), F = f.fade, D = f.dur;
+  // Zeitverzerrung: in den letzten F ms läuft die Feldzeit immer langsamer bis zum Stillstand
+  let tau = E;
+  if (E > D - F) { const u = (E - (D - F)) / F; tau = (D - F) + F * (1 - (1 - u) * (1 - u)) / 2; }
+  const val = f.fn(r, c, k, tau / 1000 * f.speed);
+  if (f.off === undefined) f.off = Math.round((f.base - val) / 360) * 360;
+  const w = ease.organic(Math.min(1, e / f.blend));
+  h.a = f.base * (1 - w) + (val + f.off) * w;
+  if (e >= D) { h.a = mod(h.a, 360); h.field = null; }
+}
+
+function flow(fn, { dur = 24000, blend = 4500, fade = 5000, delay = () => 0, speed = 1 } = {}) {
+  const now = performance.now(); let end = now;
+  forEachClock((r, c, hs) => hs.forEach(h => {
+    const st = now + delay(r, c) * FEEL.tempo / 1.9 + rand(0, 300);
+    h.tw = null;
+    h.field = { fn, t0: st, dur, blend, fade, base: h.a, speed: speed * 1.9 / FEEL.tempo };
+    end = Math.max(end, st + dur);
+  }));
+  return sleep(end - now);
+}
+
+// Klassisches 3D-Perlin-Rauschen (Ken Perlin, „Improved Noise“), Werte etwa −0,7 … 0,7
+const noise = (() => {
+  const p = new Uint8Array(512), perm = [...Array(256).keys()];
+  for (let i = 255; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [perm[i], perm[j]] = [perm[j], perm[i]]; }
+  for (let i = 0; i < 512; i++) p[i] = perm[i & 255];
+  const fade = t => t * t * t * (t * (t * 6 - 15) + 10), lerp = (t, a, b) => a + t * (b - a);
+  const grad = (hh, x, y, z) => { const h = hh & 15, u = h < 8 ? x : y, v = h < 4 ? y : h === 12 || h === 14 ? x : z; return ((h & 1) ? -u : u) + ((h & 2) ? -v : v); };
+  return (x, y, z) => {
+    const X = Math.floor(x) & 255, Y = Math.floor(y) & 255, Z = Math.floor(z) & 255;
+    x -= Math.floor(x); y -= Math.floor(y); z -= Math.floor(z);
+    const u = fade(x), v = fade(y), w = fade(z);
+    const A = p[X] + Y, AA = p[A] + Z, AB = p[A + 1] + Z, B = p[X + 1] + Y, BA = p[B] + Z, BB = p[B + 1] + Z;
+    return lerp(w, lerp(v, lerp(u, grad(p[AA], x, y, z), grad(p[BA], x - 1, y, z)), lerp(u, grad(p[AB], x, y - 1, z), grad(p[BB], x - 1, y - 1, z))),
+                   lerp(v, lerp(u, grad(p[AA + 1], x, y, z - 1), grad(p[BA + 1], x - 1, y, z - 1)), lerp(u, grad(p[AB + 1], x, y - 1, z - 1), grad(p[BB + 1], x - 1, y - 1, z - 1))));
+  };
+})();
 
 const sleep = ms => new Promise(res => setTimeout(res, ms));
 
@@ -157,6 +202,7 @@ function move(fn, { dur = 2000, delay = () => 0, dir = 'short', turns = 0, easin
       else delta = shortDelta(h.a, to) + Math.sign(shortDelta(h.a, to) || 1) * 360 * turns;
       const [dd, sd] = timing(dur, delay(r, c, k), jitter);
       const st = now + sd;
+      h.field = null;
       h.tw = { from: h.a, to: h.a + delta, t0: st, dur: dd, ease: easing };
       end = Math.max(end, st + dd);
     });
@@ -171,6 +217,7 @@ function spin(fn, { dur = 3000, delay = () => 0, easing = ease.drift, jitter } =
     const delta = fn(r, c, k); if (!delta) return;
     const [dd, sd] = timing(dur, delay(r, c, k), jitter);
     const st = now + sd;
+    h.field = null;
     h.tw = { from: h.a, to: h.a + delta, t0: st, dur: dd, ease: easing };
     end = Math.max(end, st + dd);
   }));
@@ -241,6 +288,44 @@ const dist = (r, c) => Math.hypot(r - CR, c - CC);
 const toCenter = (r, c) => mod(Math.atan2(CC - c, -(CR - r)) * 180 / Math.PI, 360);
 
 const CHOREOS = {
+  // Vogelschwarm: ein driftendes Strömungsfeld; die Zeigerpaare öffnen und schließen sich wie Flügel
+  Schwarm: () => flow((r, c, k, t) => {
+    const x = c * .15, y = r * .15;
+    const dir = noise(x + t * .07, y - t * .05, t * .045) * 560 + t * 18;
+    const wing = 95 + 125 * noise(x * .7 + 31, y * .7 + 7, t * .09);
+    return k ? dir + wing / 2 : dir - wing / 2;
+  }, { delay: (r, c) => c * 120 }),
+
+  // Kaleidoskop: ein Quadrant wird berechnet und an beiden Achsen gespiegelt
+  Kaleidoskop: () => flow((r, c, k, t) => {
+    let x = c - CC, y = r - CR;
+    const mx = x < 0, my = y < 0; x = Math.abs(x); y = Math.abs(y);
+    const d = Math.hypot(x, y);
+    const a = noise(x * .21 - t * .05, y * .21 + t * .04, t * .06) * 480
+            + Math.sin(d * .7 - t * .5) * 55 + t * 16;
+    const s = 92 + 78 * Math.sin(t * .32 + d * .42);
+    let ang = k ? a + s : a - s;
+    if (mx) ang = -ang;
+    if (my) ang = 180 - ang;
+    return ang;
+  }, { delay: (r, c) => dist(r, c) * 180 }),
+
+  // Strömung: zwei wandernde Wellenquellen überlagern sich; Zeigerpaare bilden durchgehende Linien
+  Strömung: () => flow((r, c, k, t) => {
+    const p1x = CC + 6.5 * Math.sin(t * .17), p1y = CR + 3 * Math.cos(t * .13);
+    const p2x = CC + 6.5 * Math.cos(t * .15 + 1), p2y = CR + 3 * Math.sin(t * .19 + 2);
+    const d1 = Math.hypot(c - p1x, r - p1y), d2 = Math.hypot(c - p2x, r - p2y);
+    const a = (Math.sin(d1 * .6 - t * .62) + Math.sin(d2 * .6 - t * .5)) * 62 + t * 7;
+    return k ? a + 180 : a;
+  }, { delay: (r, c) => (COLS - c) * 100 }),
+
+  // Atem: Blütenblätter öffnen und schließen sich in Wellen von der Mitte nach außen
+  Atem: () => flow((r, c, k, t) => {
+    const d = dist(r, c), b = toCenter(r, c);
+    const s = 92 - 86 * Math.cos(t * .8 - d * .55);
+    return (k ? b + s : b - s) + Math.sin(t * .3) * 25;
+  }, { delay: (r, c) => dist(r, c) * 220 }),
+
   Welle: async () => {
     await move(() => [0, 180], { dur: 1800, delay: (r, c) => c * 50 });
     await spin(() => 720, { dur: 4500, delay: (r, c) => c * 140 });
@@ -267,7 +352,7 @@ const CHOREOS = {
     await spin(() => 1080, { dur: 7000, delay: (r, c, k) => r * 90 + c * 40 + k * 700 });
   },
 };
-const CHOREO_NAMES = Object.keys(CHOREOS);
+const CHOREO_NAMES = ['Schwarm', 'Welle', 'Kaleidoskop', 'Wirbel', 'Strömung', 'Diagonalen', 'Atem', 'Blüte', 'Schere'];
 
 // ─── Ablauf ───────────────────────────────────────────────────────────────
 const settings = { mode: 'aktiv', theme: 'white', h12: false, colon: true };
