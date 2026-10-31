@@ -12,15 +12,21 @@
     --face: #f4f3ef;
     --face-edge: rgba(0,0,0,.10);
     --hand: #161616;
+    --shade: rgba(60,50,35,.34);
+    --light: rgba(255,255,255,.95);
+    --hand-shadow: rgba(40,30,20,.10);
     --ui-bg: rgba(255,255,255,.75);
     --ui-fg: #222;
   }
   :root[data-theme="black"] {
     --wall: #2a2a2a;
     --panel: #141414;
-    --face: #1b1b1b;
+    --face: #262626;
     --face-edge: rgba(255,255,255,.06);
     --hand: #f1f1f1;
+    --shade: rgba(0,0,0,.85);
+    --light: rgba(255,255,255,.20);
+    --hand-shadow: rgba(0,0,0,.55);
     --ui-bg: rgba(20,20,20,.75);
     --ui-fg: #eee;
   }
@@ -295,7 +301,11 @@ const cv = document.getElementById('c'), ctx = cv.getContext('2d');
 let geo = {};
 const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 let colors = {};
-const readColors = () => colors = { panel: css('--panel'), face: css('--face'), edge: css('--face-edge'), hand: css('--hand') };
+const readColors = () => {
+  colors = { panel: css('--panel'), face: css('--face'), hand: css('--hand'),
+             shade: css('--shade'), light: css('--light'), handShadow: css('--hand-shadow') };
+  buildFace();
+};
 
 function resize() {
   const dpr = window.devicePixelRatio || 1;
@@ -305,24 +315,67 @@ function resize() {
   cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   const pitch = Math.min(w / (COLS + .6), h / (ROWS + .6));
-  geo = { w, h, pitch, ox: (w - pitch * COLS) / 2 + pitch / 2, oy: (h - pitch * ROWS) / 2 + pitch / 2, R: pitch * .44 };
+  geo = { w, h, dpr, pitch, ox: (w - pitch * COLS) / 2 + pitch / 2, oy: (h - pitch * ROWS) / 2 + pitch / 2, R: pitch * .44 };
+  buildFace();
+}
+
+// Ein Uhrenfeld wird einmal vorgerendert: eine in die Platte eingefräste Mulde,
+// Licht von oben links → Schatten an der oberen linken Innenkante, Lichtkante unten rechts.
+let faceSprite = null;
+function buildFace() {
+  if (!geo.R || !colors.face) return;
+  const { R, dpr } = geo, pad = Math.ceil(R * .25), S = Math.ceil((R + pad) * 2);
+  const off = document.createElement('canvas');
+  off.width = S * dpr; off.height = S * dpr;
+  const g = off.getContext('2d'); g.scale(dpr, dpr);
+  const cx = S / 2, cy = S / 2;
+  const circle = (rad = R) => { g.beginPath(); g.arc(cx, cy, rad, 0, Math.PI * 2); };
+
+  // Grundfläche der Mulde: zur Mitte unten rechts etwas heller
+  const rg = g.createRadialGradient(cx + R * .25, cy + R * .3, R * .1, cx, cy, R * 1.05);
+  rg.addColorStop(0, colors.face);
+  rg.addColorStop(1, colors.panel);
+  circle(); g.fillStyle = rg; g.fill();
+
+  // Innenschatten: fällt von der oberen linken Kante in die Mulde
+  g.save(); circle(); g.clip();
+  g.beginPath(); g.rect(0, 0, S, S); g.arc(cx, cy, R, 0, Math.PI * 2, true);
+  g.shadowColor = colors.shade; g.shadowBlur = R * .35;
+  g.shadowOffsetX = R * .1 * dpr; g.shadowOffsetY = R * .16 * dpr;
+  g.fillStyle = '#000'; g.fill();
+  g.restore();
+
+  // Lichtkante unten rechts, dunkle Schnittkante oben links
+  const lg = g.createLinearGradient(cx - R, cy - R, cx + R, cy + R);
+  lg.addColorStop(0, colors.shade); lg.addColorStop(.45, 'rgba(0,0,0,0)');
+  lg.addColorStop(.6, 'rgba(0,0,0,0)'); lg.addColorStop(1, colors.light);
+  circle(R - .5); g.lineWidth = Math.max(1, R * .045); g.strokeStyle = lg; g.stroke();
+
+  faceSprite = { img: off, S };
 }
 
 function draw() {
   const { w, h, pitch, ox, oy, R } = geo;
   ctx.fillStyle = colors.panel; ctx.fillRect(0, 0, w, h);
   const L = R * .93, lw = Math.max(1.5, R * .13);
+  const sx = R * .07, sy = R * .11;          // Versatz des Zeigerschattens
   ctx.lineCap = 'round';
-  forEachClock((r, c, hs) => {
-    const x = ox + c * pitch, y = oy + r * pitch;
-    ctx.beginPath(); ctx.arc(x, y, R, 0, Math.PI * 2);
-    ctx.fillStyle = colors.face; ctx.fill();
-    ctx.lineWidth = 1; ctx.strokeStyle = colors.edge; ctx.stroke();
-    ctx.strokeStyle = colors.hand; ctx.lineWidth = lw;
+  const handPath = (x, y, hs, dx = 0, dy = 0) => {
+    ctx.beginPath();
     for (const hd of hs) {
       const a = hd.a * Math.PI / 180;
-      ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + Math.sin(a) * L, y - Math.cos(a) * L); ctx.stroke();
+      ctx.moveTo(x + dx, y + dy); ctx.lineTo(x + dx + Math.sin(a) * L, y + dy - Math.cos(a) * L);
     }
+  };
+  forEachClock((r, c, hs) => {
+    const x = ox + c * pitch, y = oy + r * pitch;
+    if (faceSprite) ctx.drawImage(faceSprite.img, x - faceSprite.S / 2, y - faceSprite.S / 2, faceSprite.S, faceSprite.S);
+    // weicher Schatten der Zeiger auf dem Zifferblatt (zwei Lagen statt teurem Blur)
+    ctx.strokeStyle = colors.handShadow;
+    ctx.lineWidth = lw * 3.0; handPath(x, y, hs, sx * 1.4, sy * 1.4); ctx.stroke();
+    ctx.lineWidth = lw * 1.9; handPath(x, y, hs, sx * 1.1, sy * 1.1); ctx.stroke();
+    ctx.lineWidth = lw * 1.1; handPath(x, y, hs, sx * .8, sy * .8); ctx.stroke();
+    ctx.strokeStyle = colors.hand; ctx.lineWidth = lw; handPath(x, y, hs); ctx.stroke();
     ctx.beginPath(); ctx.arc(x, y, lw * .55, 0, Math.PI * 2); ctx.fillStyle = colors.hand; ctx.fill();
   });
 }
