@@ -30,6 +30,35 @@
     --ui-bg: rgba(20,20,20,.75);
     --ui-fg: #eee;
   }
+  :root[data-theme="neo"] {
+    --wall: #ffd23f;
+    --panel: #8f5cf6;
+    --face: #ffd23f;
+    --hand: #111111;
+    --shade: #111111;
+    --light: #ffffff;
+    --hand-shadow: transparent;
+    --ui-bg: #ffffff;
+    --ui-fg: #111111;
+  }
+  :root[data-theme="neo"] canvas {
+    outline: 5px solid #111; border-radius: 4px;
+    box-shadow: 14px 14px 0 #111;
+  }
+  :root[data-theme="neo"] #ui {
+    border: 3px solid #111; border-radius: 6px; box-shadow: 6px 6px 0 #111;
+    backdrop-filter: none; font-weight: 700;
+  }
+  :root[data-theme="neo"] #ui button {
+    background: #fff; border: 2.5px solid #111; border-radius: 4px;
+    box-shadow: 3px 3px 0 #111; opacity: 1; font-weight: 700;
+    transition: transform .08s, box-shadow .08s;
+  }
+  :root[data-theme="neo"] #ui button:hover { transform: translate(-1px, -1px); box-shadow: 4px 4px 0 #111; }
+  :root[data-theme="neo"] #ui button:active { transform: translate(3px, 3px); box-shadow: 0 0 0 #111; }
+  :root[data-theme="neo"] #ui button.on { background: #8f5cf6; color: #fff; border-color: #111; }
+  :root[data-theme="neo"] #ui .sep { opacity: 1; width: 3px; }
+  :root[data-theme="neo"] #status { font-weight: 800; opacity: 1; text-transform: uppercase; letter-spacing: .08em; }
   * { box-sizing: border-box; }
   html, body { margin: 0; height: 100%; }
   body {
@@ -416,6 +445,16 @@ function buildFace() {
   const cx = S / 2, cy = S / 2;
   const circle = (rad = R) => { g.beginPath(); g.arc(cx, cy, rad, 0, Math.PI * 2); };
 
+  if (settings.theme === 'neo') {
+    // Neobrutalismus: flache Fläche, dicke Kontur, harter Schlagschatten ohne Weichzeichnung
+    const o = R * .14;
+    g.beginPath(); g.arc(cx + o, cy + o, R, 0, Math.PI * 2); g.fillStyle = colors.shade; g.fill();
+    circle(); g.fillStyle = colors.face; g.fill();
+    g.lineWidth = Math.max(1.5, R * .09); g.strokeStyle = colors.shade; g.stroke();
+    faceSprite = { img: off, S };
+    return;
+  }
+
   // Grundfläche der Mulde: zur Mitte unten rechts etwas heller
   const rg = g.createRadialGradient(cx + R * .25, cy + R * .3, R * .1, cx, cy, R * 1.05);
   rg.addColorStop(0, colors.face);
@@ -442,9 +481,10 @@ function buildFace() {
 function draw() {
   const { w, h, pitch, ox, oy, R } = geo;
   ctx.fillStyle = colors.panel; ctx.fillRect(0, 0, w, h);
-  const L = R * .93, lw = Math.max(1.5, R * .13);
+  const neo = settings.theme === 'neo';
+  const L = R * .93, lw = Math.max(1.5, R * (neo ? .17 : .13));
   const sx = R * .07, sy = R * .11;          // Versatz des Zeigerschattens
-  ctx.lineCap = 'round';
+  ctx.lineCap = neo ? 'square' : 'round';
   const handPath = (x, y, hs, dx = 0, dy = 0) => {
     ctx.beginPath();
     for (const hd of hs) {
@@ -456,10 +496,12 @@ function draw() {
     const x = ox + c * pitch, y = oy + r * pitch;
     if (faceSprite) ctx.drawImage(faceSprite.img, x - faceSprite.S / 2, y - faceSprite.S / 2, faceSprite.S, faceSprite.S);
     // weicher Schatten der Zeiger auf dem Zifferblatt (zwei Lagen statt teurem Blur)
+    if (!neo) {
     ctx.strokeStyle = colors.handShadow;
     ctx.lineWidth = lw * 3.0; handPath(x, y, hs, sx * 1.4, sy * 1.4); ctx.stroke();
     ctx.lineWidth = lw * 1.9; handPath(x, y, hs, sx * 1.1, sy * 1.1); ctx.stroke();
     ctx.lineWidth = lw * 1.1; handPath(x, y, hs, sx * .8, sy * .8); ctx.stroke();
+    }
     ctx.strokeStyle = colors.hand; ctx.lineWidth = lw; handPath(x, y, hs); ctx.stroke();
     ctx.beginPath(); ctx.arc(x, y, lw * .55, 0, Math.PI * 2); ctx.fillStyle = colors.hand; ctx.fill();
   });
@@ -481,7 +523,8 @@ function renderUI() {
   sep();
   for (const n of CHOREO_NAMES) btn(n, () => { forced = n; });
   sep();
-  btn(settings.theme === 'white' ? 'Schwarz' : 'Weiß', () => { settings.theme = settings.theme === 'white' ? 'black' : 'white'; applyTheme(); save(); });
+  for (const [t, label] of [['white', 'Weiß'], ['black', 'Schwarz'], ['neo', 'Neo']])
+    btn(label, () => { settings.theme = t; applyTheme(); save(); }, () => settings.theme === t);
   btn(settings.h12 ? '24h' : '12h', () => { settings.h12 = !settings.h12; save(); });
   btn(settings.colon ? 'Ohne :' : 'Mit :', () => { settings.colon = !settings.colon; save(); });
   btn('Vollbild', () => document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen?.());

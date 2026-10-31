@@ -20,7 +20,7 @@ Inspiriert von *A million Times* von [Humans since 1982](https://www.humanssince
 | Demo | Choreografien laufen im Schnelldurchlauf hintereinander |
 | Minimal | Nur die Uhrzeit, ohne Choreografien |
 
-URL-Parameter: `?mode=demo`, `?theme=black`
+URL-Parameter: `?mode=demo`, `?theme=black`, `?theme=neo` (Neobrutalismus: lila, gelb, schwarz)
 
 ## Technik
 
