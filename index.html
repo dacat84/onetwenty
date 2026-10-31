@@ -8,57 +8,13 @@
 <style>
   :root {
     --wall: #d9d6cf;
-    --panel: #ecebe6;
-    --face: #f4f3ef;
-    --face-edge: rgba(0,0,0,.10);
-    --hand: #161616;
-    --shade: rgba(60,50,35,.34);
-    --light: rgba(255,255,255,.95);
-    --hand-shadow: rgba(40,30,20,.10);
-    --ui-bg: rgba(255,255,255,.75);
+    --ui-bg: rgba(255,255,255,.78);
     --ui-fg: #222;
+    --accent: #161616;
+    --accent-fg: #fff;
+    --panel-shadow: 0 18px 50px rgba(0,0,0,.22), 0 2px 6px rgba(0,0,0,.12);
   }
-  :root[data-theme="black"] {
-    --wall: #2a2a2a;
-    --panel: #141414;
-    --face: #262626;
-    --face-edge: rgba(255,255,255,.06);
-    --hand: #f1f1f1;
-    --shade: rgba(0,0,0,.85);
-    --light: rgba(255,255,255,.20);
-    --hand-shadow: rgba(0,0,0,.55);
-    --ui-bg: rgba(20,20,20,.75);
-    --ui-fg: #eee;
-  }
-  :root[data-theme="neo"] {
-    --wall: #ffd23f;
-    --panel: #8f5cf6;
-    --face: #ffd23f;
-    --hand: #111111;
-    --shade: #111111;
-    --light: #ffffff;
-    --hand-shadow: transparent;
-    --ui-bg: #ffffff;
-    --ui-fg: #111111;
-  }
-  :root[data-theme="neo"] canvas {
-    outline: 5px solid #111; border-radius: 4px;
-    box-shadow: 14px 14px 0 #111;
-  }
-  :root[data-theme="neo"] #ui {
-    border: 3px solid #111; border-radius: 6px; box-shadow: 6px 6px 0 #111;
-    backdrop-filter: none; font-weight: 700;
-  }
-  :root[data-theme="neo"] #ui button {
-    background: #fff; border: 2.5px solid #111; border-radius: 4px;
-    box-shadow: 3px 3px 0 #111; opacity: 1; font-weight: 700;
-    transition: transform .08s, box-shadow .08s;
-  }
-  :root[data-theme="neo"] #ui button:hover { transform: translate(-1px, -1px); box-shadow: 4px 4px 0 #111; }
-  :root[data-theme="neo"] #ui button:active { transform: translate(3px, 3px); box-shadow: 0 0 0 #111; }
-  :root[data-theme="neo"] #ui button.on { background: #8f5cf6; color: #fff; border-color: #111; }
-  :root[data-theme="neo"] #ui .sep { opacity: 1; width: 3px; }
-  :root[data-theme="neo"] #status { font-weight: 800; opacity: 1; text-transform: uppercase; letter-spacing: .08em; }
+  :root[data-ui="dark"] { --ui-bg: rgba(18,18,18,.78); --ui-fg: #eee; --panel-shadow: 0 24px 60px rgba(0,0,0,.55), 0 2px 8px rgba(0,0,0,.4); }
   * { box-sizing: border-box; }
   html, body { margin: 0; height: 100%; }
   body {
@@ -68,28 +24,43 @@
     overflow: hidden;
     display: grid;
     place-items: center;
-    transition: background .6s;
+    transition: background .8s;
   }
-  canvas { display: block; }
+  canvas { display: block; border-radius: 3px; box-shadow: var(--panel-shadow); }
   #ui {
     position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%);
-    display: flex; flex-wrap: wrap; gap: 6px; justify-content: center;
+    display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; align-items: center;
     max-width: calc(100vw - 32px);
     padding: 8px; border-radius: 12px;
     background: var(--ui-bg); backdrop-filter: blur(8px);
     transition: opacity .5s;
   }
   body.idle #ui { opacity: 0; pointer-events: none; }
-  #ui button {
+  #ui button, #ui select {
     font: inherit; color: inherit; background: transparent;
     border: 1px solid currentColor; border-radius: 8px;
     padding: 5px 10px; cursor: pointer; opacity: .75;
   }
-  #ui button:hover { opacity: 1; }
-  #ui button.on { opacity: 1; background: var(--hand); color: var(--panel); border-color: var(--hand); }
-  #ui .sep { width: 1px; background: currentColor; opacity: .25; margin: 2px 4px; }
+  #ui select option { color: #111; background: #fff; }
+  #ui button:hover, #ui select:hover { opacity: 1; }
+  #ui button.on { opacity: 1; background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+  #ui .sep { width: 1px; align-self: stretch; background: currentColor; opacity: .25; margin: 2px 4px; }
   #status { position: fixed; top: 12px; left: 16px; font-size: 12px; opacity: .55; }
   body.idle #status { opacity: 0; }
+
+  /* Neobrutalismus */
+  :root[data-ui="neo"] { --ui-bg: #fff; --ui-fg: #111; --accent: #8f5cf6; --accent-fg: #fff; }
+  :root[data-ui="neo"] canvas { outline: 5px solid #111; border-radius: 4px; box-shadow: 14px 14px 0 #111; }
+  :root[data-ui="neo"] #ui { border: 3px solid #111; border-radius: 6px; box-shadow: 6px 6px 0 #111; backdrop-filter: none; font-weight: 700; }
+  :root[data-ui="neo"] #ui button, :root[data-ui="neo"] #ui select {
+    background: #fff; border: 2.5px solid #111; border-radius: 4px; box-shadow: 3px 3px 0 #111;
+    opacity: 1; font-weight: 700; transition: transform .08s, box-shadow .08s;
+  }
+  :root[data-ui="neo"] #ui button:hover { transform: translate(-1px, -1px); box-shadow: 4px 4px 0 #111; }
+  :root[data-ui="neo"] #ui button:active { transform: translate(3px, 3px); box-shadow: 0 0 0 #111; }
+  :root[data-ui="neo"] #ui button.on { background: #8f5cf6; color: #fff; border-color: #111; }
+  :root[data-ui="neo"] #ui .sep { opacity: 1; width: 3px; }
+  :root[data-ui="neo"] #status { font-weight: 800; opacity: 1; text-transform: uppercase; letter-spacing: .08em; }
 </style>
 </head>
 <body>
@@ -303,12 +274,19 @@ function timeLayout(date = new Date()) {
 // Uhrzeit wächst von der Mitte nach außen heraus; der zweite Zeiger folgt dem ersten etwas verzögert
 const showTime = (opts = {}) => {
   const g = timeLayout();
-  return move((r, c) => g[r][c], {
+  const done = move((r, c) => g[r][c], {
     dur: 4200, dir: 'cw',
     delay: (r, c, k) => dist(r, c) * 260 + k * 380,
     ...opts,
   });
+  // Uhren, die Teil einer Ziffer sind, leuchten auf, sobald ihre Zeiger angekommen sind
+  forEachClock((r, c, hs) => {
+    const part = g[r][c] !== BLANK;
+    hs.glowAt = part ? Math.max(...hs.map(h => h.tw ? h.tw.t0 + h.tw.dur : 0)) : null;
+  });
+  return done;
 };
+const clearGlow = () => forEachClock((r, c, hs) => { hs.glowAt = null; });
 
 // ─── Choreografien ────────────────────────────────────────────────────────
 const CR = (ROWS - 1) / 2, CC = (COLS - 1) / 2;
@@ -355,6 +333,18 @@ const CHOREOS = {
     return (k ? b + s : b - s) + Math.sin(t * .3) * 25;
   }, { delay: (r, c) => dist(r, c) * 220 }),
 
+  // Uhrwerk: alle Uhren zeigen kurz als echte Analoguhren die Uhrzeit (Stundenzeiger schrumpft),
+  // dann wird eine Stunde in einer Welle vorgespult und wieder zurück
+  Uhrwerk: async () => {
+    const d = new Date();
+    const H = (d.getHours() % 12 + d.getMinutes() / 60) * 30, M = d.getMinutes() * 6 + d.getSeconds() * .1;
+    animLen(.58, 3500);
+    await move(() => [H, M], { dur: 3800, dir: 'cw', delay: (r, c) => dist(r, c) * 200 });
+    await sleep(2500);
+    await spin((r, c, k) => k ? 360 : 30, { dur: 4500, delay: (r, c) => c * 160 });
+    await spin((r, c, k) => k ? -360 : -30, { dur: 4500, delay: (r, c) => (COLS - c) * 160 });
+    animLen(1, 3500);
+  },
   Welle: async () => {
     await move(() => [0, 180], { dur: 1800, delay: (r, c) => c * 50 });
     await spin(() => 720, { dur: 4500, delay: (r, c) => c * 140 });
@@ -381,7 +371,7 @@ const CHOREOS = {
     await spin(() => 1080, { dur: 7000, delay: (r, c, k) => r * 90 + c * 40 + k * 700 });
   },
 };
-const CHOREO_NAMES = ['Schwarm', 'Welle', 'Kaleidoskop', 'Wirbel', 'Strömung', 'Diagonalen', 'Atem', 'Blüte', 'Schere'];
+const CHOREO_NAMES = ['Schwarm', 'Welle', 'Kaleidoskop', 'Uhrwerk', 'Strömung', 'Wirbel', 'Atem', 'Diagonalen', 'Blüte', 'Schere'];
 
 // ─── Ablauf ───────────────────────────────────────────────────────────────
 const settings = { mode: 'aktiv', theme: 'white', h12: false, colon: true };
@@ -402,6 +392,7 @@ async function run() {
       const name = forced || CHOREO_NAMES[choreoIdx++ % CHOREO_NAMES.length];
       forced = null;
       statusEl.textContent = name;
+      clearGlow();
       await CHOREOS[name]();
       statusEl.textContent = '';
       if (settings.mode === 'aktiv') await waitUntil(() => sec() < 30); // bis zur neuen Minute
@@ -410,19 +401,137 @@ async function run() {
   }
 }
 
-// ─── Zeichnen ─────────────────────────────────────────────────────────────
-const cv = document.getElementById('c'), ctx = cv.getContext('2d');
-let geo = {};
-const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
-let colors = {};
-const readColors = () => {
-  colors = { panel: css('--panel'), face: css('--face'), hand: css('--hand'),
-             shade: css('--shade'), light: css('--light'), handShadow: css('--hand-shadow') };
-  buildFace();
+// Länge des „Stundenzeigers“ (Zeiger 0) – nur in der Choreografie „Uhrwerk“ ≠ 1
+let hourLen = 1, lenTw = null;
+function animLen(to, dur) { lenTw = { from: hourLen, to, t0: performance.now(), dur: dur * FEEL.tempo / 1.9 }; }
+function updateLen(now) {
+  if (!lenTw) return;
+  const p = Math.min(1, (now - lenTw.t0) / lenTw.dur);
+  hourLen = lenTw.from + (lenTw.to - lenTw.from) * ease.organic(p);
+  if (p >= 1) lenTw = null;
+}
+
+// ─── Materialien ──────────────────────────────────────────────────────────
+// face.type: 'recess' = eingefräste Mulde, 'raised' = erhabene Scheibe, 'neo' = flach mit harter Kontur
+// hand.hl = Glanzlinie für Metallzeiger
+const GOLD = { c: '#a8812f', hl: '#f2d98f', w: 1.3 };
+const BRASS = { c: '#b8934a', hl: '#f5e2a8', w: 1.3 };
+const COPPER_HAND = { c: '#a35a2c', hl: '#f3b48a', w: 1.3 };
+const THEMES = {
+  white:     { label: 'Weiß',            ui: 'light', wall: '#d9d6cf', panel: '#ecebe6', face: { type: 'recess', fill: '#f4f3ef' }, hand: { c: '#161616' }, shade: 'rgba(60,50,35,.34)', light: 'rgba(255,255,255,.95)', handShadow: 'rgba(40,30,20,.10)' },
+  black:     { label: 'Schwarz',         ui: 'dark',  wall: '#2a2a2a', panel: '#141414', face: { type: 'recess', fill: '#262626' }, hand: { c: '#f1f1f1' }, shade: 'rgba(0,0,0,.85)', light: 'rgba(255,255,255,.2)', handShadow: 'rgba(0,0,0,.55)' },
+  neo:       { label: 'Neo',             ui: 'neo',   wall: '#ffd23f', panel: '#8f5cf6', face: { type: 'neo', fill: '#ffd23f', active: '#ffffff' }, hand: { c: '#111111', cap: 'square', w: 1.3 }, shade: '#111111' },
+  neoPink:   { label: 'Neo Pink',        ui: 'neo',   wall: '#7cf0c5', panel: '#ff5fa2', face: { type: 'neo', fill: '#7cf0c5', active: '#ffffff' }, hand: { c: '#111111', cap: 'square', w: 1.3 }, shade: '#111111' },
+  walnut:    { label: 'Nussbaum',        ui: 'dark',  wall: '#cbc2b4', tex: 'wood', ramp: ['#24130a', '#3e2314', '#5c3820', '#7a4f30', '#8d6140'], face: { type: 'recess', tint: 'rgba(0,0,0,.12)' }, hand: BRASS, shade: 'rgba(15,5,0,.75)', light: 'rgba(255,215,170,.28)', handShadow: 'rgba(0,0,0,.38)' },
+  oak:       { label: 'Eiche',           ui: 'light', wall: '#ebe5da', tex: 'wood', ramp: ['#8f6b40', '#ab8553', '#c49f6b', '#d8b985', '#e6cc9d'], face: { type: 'recess', tint: 'rgba(80,40,0,.07)' }, hand: { c: '#1b1611', w: 1.2 }, shade: 'rgba(70,40,10,.5)', light: 'rgba(255,248,230,.7)', handShadow: 'rgba(50,25,0,.2)' },
+  corten:    { label: 'Rost (Corten)',   ui: 'dark',  wall: '#3b3734', tex: 'rust', face: { type: 'recess', tint: 'rgba(20,5,0,.12)' }, hand: { c: '#15100c', w: 1.2 }, shade: 'rgba(25,6,0,.75)', light: 'rgba(255,190,140,.3)', handShadow: 'rgba(0,0,0,.35)' },
+  carrara:   { label: 'Marmor Carrara',  ui: 'light', wall: '#cdcac4', tex: 'marble', base: '#efefeb', cloud: '#dcdddd', vein: '#6f757c', face: { type: 'recess', tint: 'rgba(40,40,50,.04)' }, hand: GOLD, shade: 'rgba(40,40,50,.32)', light: 'rgba(255,255,255,.95)', handShadow: 'rgba(30,30,40,.16)' },
+  nero:      { label: 'Marmor Nero',     ui: 'dark',  wall: '#1d1d1f', tex: 'marble', base: '#121214', cloud: '#232327', vein: '#ebe7df', face: { type: 'recess', tint: 'rgba(0,0,0,.18)' }, hand: GOLD, shade: 'rgba(0,0,0,.9)', light: 'rgba(255,255,255,.18)', handShadow: 'rgba(0,0,0,.6)' },
+  verde:     { label: 'Marmor Verde',    ui: 'dark',  wall: '#202d28', tex: 'marble', base: '#0d2a20', cloud: '#1b4a38', vein: '#d4e8db', face: { type: 'recess', tint: 'rgba(0,0,0,.15)' }, hand: GOLD, shade: 'rgba(0,10,5,.85)', light: 'rgba(220,255,235,.2)', handShadow: 'rgba(0,0,0,.5)' },
+  rosa:      { label: 'Marmor Rosa',     ui: 'light', wall: '#efe4de', tex: 'marble', base: '#efd5cb', cloud: '#e2bcae', vein: '#a06862', face: { type: 'recess', tint: 'rgba(90,30,20,.05)' }, hand: { c: '#3a2220', w: 1.2 }, shade: 'rgba(90,40,30,.38)', light: 'rgba(255,245,240,.9)', handShadow: 'rgba(80,30,20,.16)' },
+  sodalith:  { label: 'Marmor Blau',     ui: 'dark',  wall: '#1a2233', tex: 'marble', base: '#16264f', cloud: '#2b4583', vein: '#e3e8f3', face: { type: 'recess', tint: 'rgba(0,0,20,.15)' }, hand: { c: '#f3f1ea', w: 1.2 }, shade: 'rgba(0,0,15,.8)', light: 'rgba(210,225,255,.22)', handShadow: 'rgba(0,0,0,.5)' },
+  copper:    { label: 'Kupfer',          ui: 'dark',  wall: '#2b2522', tex: 'copper', face: { type: 'raised', fill: '#c97a4a', fill2: '#7e3e1f' }, hand: { c: '#26120a', w: 1.2 }, shade: 'rgba(20,6,0,.7)', light: 'rgba(255,220,190,.55)', handShadow: 'rgba(30,10,0,.35)' },
+  verdigris: { label: 'Grünspan',        ui: 'dark',  wall: '#2c3a37', tex: 'verdigris', face: { type: 'recess', tint: 'rgba(0,20,15,.12)' }, hand: COPPER_HAND, shade: 'rgba(0,20,15,.7)', light: 'rgba(210,255,240,.3)', handShadow: 'rgba(0,0,0,.4)' },
+  concrete:  { label: 'Beton',           ui: 'light', wall: '#c4c3bf', tex: 'concrete', face: { type: 'recess', tint: 'rgba(0,0,0,.05)' }, hand: { c: '#ff5a1f', w: 1.25 }, shade: 'rgba(30,30,30,.45)', light: 'rgba(255,255,255,.6)', handShadow: 'rgba(0,0,0,.22)' },
+  midnight:  { label: 'Mitternacht',     ui: 'dark',  wall: '#0b1222', panel: '#0f1c38', face: { type: 'raised', fill: '#1c3263', fill2: '#0d1730' }, hand: GOLD, shade: 'rgba(0,0,10,.75)', light: 'rgba(170,200,255,.25)', handShadow: 'rgba(0,0,0,.5)' },
+  sand:      { label: 'Sandstein',       ui: 'light', wall: '#e9e1d3', tex: 'concrete', tone: [214, 196, 165], face: { type: 'recess', tint: 'rgba(90,60,20,.05)' }, hand: { c: '#3b2c1c', w: 1.2 }, shade: 'rgba(100,70,30,.4)', light: 'rgba(255,250,235,.8)', handShadow: 'rgba(80,50,10,.18)' },
+};
+const theme = () => THEMES[settings.theme] || THEMES.white;
+
+// ─── Prozedurale Texturen ─────────────────────────────────────────────────
+const hex = h => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
+const clamp01 = x => x < 0 ? 0 : x > 1 ? 1 : x;
+const smooth = (a, b, x) => { const t = clamp01((x - a) / (b - a)); return t * t * (3 - 2 * t); };
+const mix = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
+function ramp(stops, t) {
+  t = clamp01(t) * (stops.length - 1); const i = Math.min(stops.length - 2, Math.floor(t));
+  return mix(stops[i], stops[i + 1], t - i);
+}
+function fbm(x, y, z, oct) {
+  let s = 0, a = .5, f = 1;
+  for (let i = 0; i < oct; i++) { s += a * noise(x * f, y * f, z + i * 7.3); a *= .5; f *= 2.03; }
+  return s;
+}
+
+const MATERIAL = {
+  wood(u, v, T) {
+    const R = T._ramp || (T._ramp = T.ramp.map(hex));
+    const warp = fbm(u * .09, v * .45, 1.3, 3);
+    const ring = v * 1.35 + warp * 4.2 + fbm(u * .025, v * .08, 7.1, 2) * 5;
+    const figure = .5 + .5 * Math.sin(ring * Math.PI * 2);
+    const streak = .5 + fbm(u * .7, v * 16, 3.3, 3) * 1.1;
+    const pore = noise(u * 9, v * 60, 5.5) > .38 ? -.12 : 0;
+    return ramp(R, Math.pow(figure, .8) * .55 + streak * .45 + pore);
+  },
+  marble(u, v, T) {
+    const base = T._b || (T._b = hex(T.base)), cloud = T._c || (T._c = hex(T.cloud)), vein = T._v || (T._v = hex(T.vein));
+    let col = mix(base, cloud, smooth(.3, .75, .5 + fbm(u * .22, v * .22, 2.1, 4)));
+    // Hauptadern: ruhig geschwungen (wenige Oktaven), mit weichem Hof
+    const tv = u * .16 + v * .24 + fbm(u * .13, v * .13, 5.5, 3) * 3.2;
+    const vv = 1 - Math.abs(Math.sin(tv * Math.PI));
+    // feine Nebenadern, nur stellenweise sichtbar
+    const tv2 = u * .45 - v * .2 + fbm(u * .22, v * .22, 9.9, 3) * 2.6;
+    const vv2 = (1 - Math.abs(Math.sin(tv2 * Math.PI))) * smooth(.05, .35, fbm(u * .15, v * .15, 4.4, 2) + .2);
+    const amt = Math.pow(vv, 30) * .95 + Math.pow(vv, 7) * .22 + Math.pow(vv2, 60) * .5;
+    return mix(col, vein, clamp01(amt));
+  },
+  rust(u, v) {
+    const R = MATERIAL._rust || (MATERIAL._rust = ['#26100a', '#4e1f0e', '#7c3414', '#a24c1c', '#bf6a30', '#d38d50'].map(hex));
+    const n = .5 + fbm(u * .4, v * .4, 3.7, 5);
+    const d = .5 + fbm(u * 2.4, v * 2.4, 8.1, 3);
+    const streak = fbm(u * 1.4, v * .07, 4.4, 2);
+    let t = n * .62 + d * .3 + streak * .5 - .02;
+    if (noise(u * 11, v * 11, 2.2) > .45) t -= .25;
+    return ramp(R, t);
+  },
+  copper(u, v) {
+    const R = MATERIAL._cu || (MATERIAL._cu = ['#3e1a0b', '#7a3a1c', '#b5633a', '#de9467', '#f6c7a0'].map(hex));
+    const brush = fbm(u * .12, v * 30, 1.1, 2) * .3;
+    const sheen = .5 + .5 * Math.sin((u * .16 - v * .32) * 2.2 + fbm(u * .18, v * .18, 2.2, 2) * 2.5);
+    return ramp(R, .3 + sheen * .5 + brush);
+  },
+  verdigris(u, v) {
+    const CU = MATERIAL._cu2 || (MATERIAL._cu2 = ['#3a170a', '#6e3216', '#9a5328', '#b86e3c'].map(hex));
+    const PT = MATERIAL._pt || (MATERIAL._pt = ['#1f5a50', '#3c8a78', '#6cb7a1', '#a3d8c6'].map(hex));
+    const cu = ramp(CU, .45 + fbm(u * .12, v * 20, 1.2, 2) * .8 + fbm(u * .5, v * .5, 3.1, 3) * .6);
+    const n = .5 + fbm(u * .95, v * .95, 6.6, 5) + fbm(u * 4, v * 4, 1.9, 2) * .3;
+    const p = smooth(.42, .6, n);
+    const pt = ramp(PT, .5 + fbm(u * 1.1, v * 1.1, 4.2, 3) * 1.2);
+    let col = mix(cu, pt, p);
+    const drip = fbm(u * 1.8, v * .06, 8.8, 2);
+    if (drip > .18) col = mix(col, PT[1], clamp01((drip - .18) * 2.5) * .5);
+    return col;
+  },
+  concrete(u, v, T) {
+    const tone = T.tone || [168, 167, 163];
+    const n = fbm(u * .7, v * .7, 1.7, 5) * .28 + fbm(u * 5, v * 5, 2.9, 2) * .12;
+    let k = 1 + n;
+    if (noise(u * 16, v * 16, 3.3) > .43) k -= .22;
+    if (noise(u * 40, v * 40, 6.1) > .5) k -= .1;
+    return [tone[0] * k, tone[1] * k, tone[2] * k];
+  },
 };
 
+const texCache = {};
+function texture(key, W, H) {
+  const id = key + W + 'x' + H; if (texCache[id]) return texCache[id];
+  const T = THEMES[key], c = document.createElement('canvas'); c.width = W; c.height = H;
+  const g = c.getContext('2d'), img = g.createImageData(W, H), px = img.data, fn = MATERIAL[T.tex];
+  const scale = PANEL_W / W;          // Koordinaten in Uhrenabständen → Maserung unabhängig von der Auflösung
+  for (let y = 0, i = 0; y < H; y++) for (let x = 0; x < W; x++, i += 4) {
+    const col = fn(x * scale, y * scale, T);
+    px[i] = col[0]; px[i + 1] = col[1]; px[i + 2] = col[2]; px[i + 3] = 255;
+  }
+  g.putImageData(img, 0, 0);
+  return texCache[id] = c;
+}
+
+// ─── Zeichnen ─────────────────────────────────────────────────────────────
+const cv = document.getElementById('c'), ctx = cv.getContext('2d');
+let geo = {}, bg = null, activeSprite = null;
+
 function resize() {
-  const dpr = window.devicePixelRatio || 1;
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
   const maxW = innerWidth * .94, maxH = innerHeight * .9;
   const w = Math.min(maxW, maxH * PANEL_W / PANEL_H), h = w * PANEL_H / PANEL_W;
   cv.style.width = w + 'px'; cv.style.height = h + 'px';
@@ -430,84 +539,119 @@ function resize() {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   const pitch = Math.min(w / (COLS + .6), h / (ROWS + .6));
   geo = { w, h, dpr, pitch, ox: (w - pitch * COLS) / 2 + pitch / 2, oy: (h - pitch * ROWS) / 2 + pitch / 2, R: pitch * .44 };
-  buildFace();
+  buildBackground();
 }
 
-// Ein Uhrenfeld wird einmal vorgerendert: eine in die Platte eingefräste Mulde,
-// Licht von oben links → Schatten an der oberen linken Innenkante, Lichtkante unten rechts.
-let faceSprite = null;
-function buildFace() {
-  if (!geo.R || !colors.face) return;
-  const { R, dpr } = geo, pad = Math.ceil(R * .25), S = Math.ceil((R + pad) * 2);
-  const off = document.createElement('canvas');
-  off.width = S * dpr; off.height = S * dpr;
-  const g = off.getContext('2d'); g.scale(dpr, dpr);
-  const cx = S / 2, cy = S / 2;
-  const circle = (rad = R) => { g.beginPath(); g.arc(cx, cy, rad, 0, Math.PI * 2); };
+// Platte und alle Zifferblätter sind statisch → einmal in ein Hintergrundbild rendern
+function buildBackground() {
+  const T = theme(), { w, h, dpr, R, pitch, ox, oy } = geo; if (!R) return;
+  const c = document.createElement('canvas'); c.width = Math.round(w * dpr); c.height = Math.round(h * dpr);
+  const g = c.getContext('2d'); g.scale(dpr, dpr);
 
-  if (settings.theme === 'neo') {
-    // Neobrutalismus: flache Fläche, dicke Kontur, harter Schlagschatten ohne Weichzeichnung
+  if (T.tex) {
+    const TW = Math.max(300, Math.min(1100, Math.round(w * dpr * .6)));
+    g.imageSmoothingQuality = 'high';
+    g.drawImage(texture(settings.theme, TW, Math.round(TW * h / w)), 0, 0, w, h);
+    // feine Fase an der Plattenkante
+    g.lineWidth = 2; g.strokeStyle = T.light; g.strokeRect(1, 1, w - 2, h - 2);
+  } else { g.fillStyle = T.panel; g.fillRect(0, 0, w, h); }
+
+  forEachClock((r, cc) => drawFace(g, ox + cc * pitch, oy + r * pitch, R, T));
+  bg = c;
+
+  activeSprite = null;
+  if (T.face.active) {
+    const S = Math.ceil(R * 2.6), a = document.createElement('canvas');
+    a.width = S * dpr; a.height = S * dpr;
+    const ag = a.getContext('2d'); ag.scale(dpr, dpr);
+    ag.beginPath(); ag.arc(S / 2, S / 2, R, 0, Math.PI * 2);
+    ag.fillStyle = T.face.active; ag.fill();
+    ag.lineWidth = Math.max(1.5, R * .09); ag.strokeStyle = T.shade; ag.stroke();
+    activeSprite = { img: a, S };
+  }
+}
+
+function drawFace(g, x, y, R, T) {
+  const F = T.face, circle = (rad = R, cx = x, cy = y) => { g.beginPath(); g.arc(cx, cy, rad, 0, Math.PI * 2); };
+  if (F.type === 'neo') {
     const o = R * .14;
-    g.beginPath(); g.arc(cx + o, cy + o, R, 0, Math.PI * 2); g.fillStyle = colors.shade; g.fill();
-    circle(); g.fillStyle = colors.face; g.fill();
-    g.lineWidth = Math.max(1.5, R * .09); g.strokeStyle = colors.shade; g.stroke();
-    faceSprite = { img: off, S };
+    circle(R, x + o, y + o); g.fillStyle = T.shade; g.fill();
+    circle(); g.fillStyle = F.fill; g.fill();
+    g.lineWidth = Math.max(1.5, R * .09); g.strokeStyle = T.shade; g.stroke();
     return;
   }
-
-  // Grundfläche der Mulde: zur Mitte unten rechts etwas heller
-  const rg = g.createRadialGradient(cx + R * .25, cy + R * .3, R * .1, cx, cy, R * 1.05);
-  rg.addColorStop(0, colors.face);
-  rg.addColorStop(1, colors.panel);
-  circle(); g.fillStyle = rg; g.fill();
-
-  // Innenschatten: fällt von der oberen linken Kante in die Mulde
+  if (F.type === 'raised') {
+    // erhabene Scheibe: Schlagschatten nach unten rechts, Wölbung durch Verlauf
+    g.save(); circle();
+    g.shadowColor = T.shade; g.shadowBlur = R * .45; g.shadowOffsetX = R * .12 * geo.dpr; g.shadowOffsetY = R * .2 * geo.dpr;
+    const lg = g.createLinearGradient(x - R, y - R, x + R, y + R);
+    lg.addColorStop(0, F.fill); lg.addColorStop(1, F.fill2);
+    g.fillStyle = lg; g.fill(); g.restore();
+    const rg = g.createRadialGradient(x - R * .35, y - R * .4, 0, x - R * .2, y - R * .2, R * 1.1);
+    rg.addColorStop(0, T.light); rg.addColorStop(.55, 'rgba(255,255,255,0)');
+    circle(); g.fillStyle = rg; g.fill();
+    return;
+  }
+  // 'recess': eingefräste Mulde, Licht von oben links
+  if (F.fill) {
+    const rg = g.createRadialGradient(x + R * .25, y + R * .3, R * .1, x, y, R * 1.05);
+    rg.addColorStop(0, F.fill); rg.addColorStop(1, T.panel);
+    circle(); g.fillStyle = rg; g.fill();
+  } else { circle(); g.fillStyle = F.tint; g.fill(); }
   g.save(); circle(); g.clip();
-  g.beginPath(); g.rect(0, 0, S, S); g.arc(cx, cy, R, 0, Math.PI * 2, true);
-  g.shadowColor = colors.shade; g.shadowBlur = R * .35;
-  g.shadowOffsetX = R * .1 * dpr; g.shadowOffsetY = R * .16 * dpr;
+  g.beginPath(); g.rect(x - R * 3, y - R * 3, R * 6, R * 6); g.arc(x, y, R, 0, Math.PI * 2, true);
+  g.shadowColor = T.shade; g.shadowBlur = R * .35;
+  g.shadowOffsetX = R * .1 * geo.dpr; g.shadowOffsetY = R * .16 * geo.dpr;
   g.fillStyle = '#000'; g.fill();
   g.restore();
-
-  // Lichtkante unten rechts, dunkle Schnittkante oben links
-  const lg = g.createLinearGradient(cx - R, cy - R, cx + R, cy + R);
-  lg.addColorStop(0, colors.shade); lg.addColorStop(.45, 'rgba(0,0,0,0)');
-  lg.addColorStop(.6, 'rgba(0,0,0,0)'); lg.addColorStop(1, colors.light);
+  const lg = g.createLinearGradient(x - R, y - R, x + R, y + R);
+  lg.addColorStop(0, T.shade); lg.addColorStop(.45, 'rgba(0,0,0,0)');
+  lg.addColorStop(.6, 'rgba(0,0,0,0)'); lg.addColorStop(1, T.light);
   circle(R - .5); g.lineWidth = Math.max(1, R * .045); g.strokeStyle = lg; g.stroke();
-
-  faceSprite = { img: off, S };
 }
 
-function draw() {
-  const { w, h, pitch, ox, oy, R } = geo;
-  ctx.fillStyle = colors.panel; ctx.fillRect(0, 0, w, h);
-  const neo = settings.theme === 'neo';
-  const L = R * .93, lw = Math.max(1.5, R * (neo ? .17 : .13));
-  const sx = R * .07, sy = R * .11;          // Versatz des Zeigerschattens
-  ctx.lineCap = neo ? 'square' : 'round';
-  const handPath = (x, y, hs, dx = 0, dy = 0) => {
+let lastNow = performance.now();
+function draw(now) {
+  const T = theme(), H = T.hand, { w, h, pitch, ox, oy, R } = geo;
+  const dt = Math.min(.1, (now - lastNow) / 1000); lastNow = now;
+  if (bg) ctx.drawImage(bg, 0, 0, w, h);
+  const L = R * .93, lw = Math.max(1.5, R * .13 * (H.w || 1));
+  const sx = R * .07, sy = R * .11;
+  ctx.lineCap = H.cap || 'round';
+  const handPath = (x, y, hs, dx = 0, dy = 0, shrink = 1) => {
     ctx.beginPath();
-    for (const hd of hs) {
-      const a = hd.a * Math.PI / 180;
-      ctx.moveTo(x + dx, y + dy); ctx.lineTo(x + dx + Math.sin(a) * L, y + dy - Math.cos(a) * L);
-    }
+    hs.forEach((hd, k) => {
+      const a = hd.a * Math.PI / 180, l = L * (k === 0 ? hourLen : 1) * shrink;
+      ctx.moveTo(x + dx, y + dy); ctx.lineTo(x + dx + Math.sin(a) * l, y + dy - Math.cos(a) * l);
+    });
   };
   forEachClock((r, c, hs) => {
     const x = ox + c * pitch, y = oy + r * pitch;
-    if (faceSprite) ctx.drawImage(faceSprite.img, x - faceSprite.S / 2, y - faceSprite.S / 2, faceSprite.S, faceSprite.S);
-    // weicher Schatten der Zeiger auf dem Zifferblatt (zwei Lagen statt teurem Blur)
-    if (!neo) {
-    ctx.strokeStyle = colors.handShadow;
-    ctx.lineWidth = lw * 3.0; handPath(x, y, hs, sx * 1.4, sy * 1.4); ctx.stroke();
-    ctx.lineWidth = lw * 1.9; handPath(x, y, hs, sx * 1.1, sy * 1.1); ctx.stroke();
-    ctx.lineWidth = lw * 1.1; handPath(x, y, hs, sx * .8, sy * .8); ctx.stroke();
+    // aufleuchtende Ziffern (nur Materialien mit face.active)
+    const target = hs.glowAt != null && now >= hs.glowAt ? 1 : 0;
+    hs.glow = (hs.glow || 0) + (target - (hs.glow || 0)) * Math.min(1, dt * 2.2);
+    if (activeSprite && hs.glow > .01) {
+      ctx.globalAlpha = hs.glow;
+      ctx.drawImage(activeSprite.img, x - activeSprite.S / 2, y - activeSprite.S / 2, activeSprite.S, activeSprite.S);
+      ctx.globalAlpha = 1;
     }
-    ctx.strokeStyle = colors.hand; ctx.lineWidth = lw; handPath(x, y, hs); ctx.stroke();
-    ctx.beginPath(); ctx.arc(x, y, lw * .55, 0, Math.PI * 2); ctx.fillStyle = colors.hand; ctx.fill();
+    if (T.handShadow) {
+      ctx.strokeStyle = T.handShadow;
+      ctx.lineWidth = lw * 3.0; handPath(x, y, hs, sx * 1.4, sy * 1.4); ctx.stroke();
+      ctx.lineWidth = lw * 1.9; handPath(x, y, hs, sx * 1.1, sy * 1.1); ctx.stroke();
+      ctx.lineWidth = lw * 1.1; handPath(x, y, hs, sx * .8, sy * .8); ctx.stroke();
+    }
+    ctx.strokeStyle = H.c; ctx.lineWidth = lw; handPath(x, y, hs); ctx.stroke();
+    if (H.hl) {   // Glanzlinie auf Metallzeigern
+      ctx.strokeStyle = H.hl; ctx.globalAlpha = .75; ctx.lineWidth = lw * .32;
+      handPath(x, y, hs, -lw * .18, -lw * .18, .92); ctx.stroke(); ctx.globalAlpha = 1;
+    }
+    ctx.beginPath(); ctx.arc(x, y, lw * .6, 0, Math.PI * 2); ctx.fillStyle = H.c; ctx.fill();
+    if (H.hl) { ctx.beginPath(); ctx.arc(x - lw * .15, y - lw * .15, lw * .22, 0, Math.PI * 2); ctx.fillStyle = H.hl; ctx.fill(); }
   });
 }
 
-function frame(now) { updateHands(now); draw(); requestAnimationFrame(frame); }
+function frame(now) { updateHands(now); updateLen(now); draw(now); requestAnimationFrame(frame); }
 
 // ─── Bedienleiste ─────────────────────────────────────────────────────────
 const ui = document.getElementById('ui');
@@ -523,13 +667,28 @@ function renderUI() {
   sep();
   for (const n of CHOREO_NAMES) btn(n, () => { forced = n; });
   sep();
-  for (const [t, label] of [['white', 'Weiß'], ['black', 'Schwarz'], ['neo', 'Neo']])
-    btn(label, () => { settings.theme = t; applyTheme(); save(); }, () => settings.theme === t);
+  const sel = document.createElement('select'); sel.title = 'Material';
+  for (const [k, t] of Object.entries(THEMES)) {
+    const o = document.createElement('option'); o.value = k; o.textContent = t.label;
+    if (k === settings.theme) o.selected = true; sel.appendChild(o);
+  }
+  sel.onchange = () => { settings.theme = sel.value; applyTheme(); save(); renderUI(); };
+  ui.appendChild(sel);
   btn(settings.h12 ? '24h' : '12h', () => { settings.h12 = !settings.h12; save(); });
   btn(settings.colon ? 'Ohne :' : 'Mit :', () => { settings.colon = !settings.colon; save(); });
   btn('Vollbild', () => document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen?.());
 }
-function applyTheme() { document.documentElement.dataset.theme = settings.theme; readColors(); }
+function applyTheme() {
+  if (!THEMES[settings.theme]) settings.theme = 'white';
+  const T = theme(), root = document.documentElement;
+  root.dataset.ui = T.ui; root.dataset.theme = settings.theme;
+  root.style.setProperty('--wall', T.wall);
+  if (T.ui !== 'neo') {
+    root.style.setProperty('--accent', T.hand.c);
+    root.style.setProperty('--accent-fg', T.ui === 'dark' ? '#111' : '#fff');
+  } else { root.style.removeProperty('--accent'); root.style.removeProperty('--accent-fg'); }
+  buildBackground();
+}
 function save() { try { localStorage.setItem('onetwenty', JSON.stringify(settings)); } catch (e) {} }
 try { Object.assign(settings, JSON.parse(localStorage.getItem('onetwenty') || '{}')); } catch (e) {}
 const q = new URLSearchParams(location.search);
@@ -540,7 +699,7 @@ if (q.get('theme')) settings.theme = q.get('theme');
 let idleT; const wake = () => { document.body.classList.remove('idle'); clearTimeout(idleT); idleT = setTimeout(() => document.body.classList.add('idle'), 3000); };
 ['mousemove', 'touchstart', 'keydown'].forEach(e => addEventListener(e, wake));
 
-addEventListener('resize', resize);
+let resizeT; addEventListener('resize', () => { clearTimeout(resizeT); resizeT = setTimeout(resize, 120); });
 applyTheme(); resize(); renderUI(); wake();
 requestAnimationFrame(frame);
 run();
