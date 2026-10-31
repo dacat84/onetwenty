@@ -64,8 +64,8 @@
 
 <script>
 // ─── Grundgrößen ──────────────────────────────────────────────────────────
-const ROWS = 8, COLS = 15;               // 8 × 15 = 120 Uhren
-const PANEL_W = 212, PANEL_H = 121;      // Original-Seitenverhältnis (cm)
+const ROWS = 8, COLS = 18;               // 8 × 18 = 144 Uhren
+const PANEL_W = COLS + .8, PANEL_H = ROWS + .8;  // Seitenverhältnis folgt dem Raster
 
 // Winkel in Grad: 0 = 12 Uhr, im Uhrzeigersinn
 const mod = (a, n) => ((a % n) + n) % n;
@@ -171,37 +171,50 @@ function spin(fn, { dur = 3000, delay = () => 0, easing = ease.drift, jitter } =
   return sleep(end - now);
 }
 
-// ─── Ziffern-Font (3 × 6 Uhren je Ziffer) ─────────────────────────────────
-const GLYPH = {
-  '┌': [90, 180], '┐': [270, 180], '└': [0, 90], '┘': [0, 270],
-  '─': [90, 270], '│': [0, 180],
-  '╶': [90, 90], '╴': [270, 270], '╷': [180, 180], '╵': [0, 0],
-  ' ': [225, 225],
+// ─── Ziffern als Konturschrift ────────────────────────────────────────────
+// Jede Ziffer ist ein 3 × 5 Pixel-Bitmap. Ein „Pixel“ ist das Quadrat zwischen vier Uhren.
+// Gezeichnet wird nur der Umriss der gefüllten Pixel – ein Umriss verzweigt sich nie,
+// deshalb braucht jede Uhr genau zwei Zeiger.
+const FONT = {
+  0: ['111', '101', '101', '101', '111'],
+  1: ['110', '010', '010', '010', '111'],
+  2: ['111', '001', '111', '100', '111'],
+  3: ['111', '001', '111', '001', '111'],
+  4: ['101', '101', '111', '001', '001'],
+  5: ['111', '100', '111', '001', '111'],
+  6: ['111', '100', '111', '101', '111'],
+  7: ['111', '001', '001', '001', '001'],
+  8: ['111', '101', '111', '101', '111'],
+  9: ['111', '101', '111', '001', '111'],
 };
-const DIGITS = {
-  0: ['┌─┐', '│ │', '│ │', '│ │', '│ │', '└─┘'],
-  1: ['╶┐ ', ' │ ', ' │ ', ' │ ', ' │ ', ' ╵ '],
-  2: ['╶─┐', '  │', '┌─┘', '│  ', '│  ', '└─╴'],
-  3: ['╶─┐', '  │', '╶─│', '  │', '  │', '╶─┘'],
-  4: ['╷ ╷', '│ │', '└─│', '  │', '  │', '  ╵'],
-  5: ['┌─╴', '│  ', '└─┐', '  │', '  │', '╶─┘'],
-  6: ['┌─╴', '│  ', '│─┐', '│ │', '│ │', '└─┘'],
-  7: ['╶─┐', '  │', '  │', '  │', '  │', '  ╵'],
-  8: ['┌─┐', '│ │', '│─│', '│ │', '│ │', '└─┘'],
-  9: ['┌─┐', '│ │', '└─│', '  │', '  │', '╶─┘'],
-};
-const DIGIT_COLS = [0, 4, 8, 12];  // Startspalte jeder Ziffer, Spalten 3/7/11 bleiben leer
+const PX_ROWS = ROWS - 1, PX_COLS = COLS - 1;   // 7 × 17 Pixel
+const DIGIT_X = [0, 4, 10, 14];                 // Pixelspalte jeder Ziffer (symmetrisch)
+const COLON = [[2, 8], [4, 8]];                 // zwei Punkte als kleine Quadrate
+const BLANK = [225, 225];
 
 function timeLayout(date = new Date()) {
   let h = date.getHours(); const m = date.getMinutes();
   if (settings.h12) h = h % 12 || 12;
   const str = String(h).padStart(2, '0') + String(m).padStart(2, '0');
-  const grid = Array.from({ length: ROWS }, () => Array(COLS).fill(GLYPH[' ']));
-  [...str].forEach((d, i) => {
-    DIGITS[d].forEach((row, r) => [...row].forEach((ch, j) => {
-      grid[r + 1][DIGIT_COLS[i] + j] = GLYPH[ch];
-    }));
-  });
+  const px = Array.from({ length: PX_ROWS }, () => Array(PX_COLS).fill(0));
+  [...str].forEach((d, i) => FONT[d].forEach((row, r) => [...row].forEach((v, j) => {
+    if (v === '1') px[r + 1][DIGIT_X[i] + j] = 1;
+  })));
+  if (settings.colon) COLON.forEach(([r, c]) => px[r][c] = 1);
+  const P = (r, c) => (r >= 0 && c >= 0 && r < PX_ROWS && c < PX_COLS) ? px[r][c] : 0;
+  const grid = [];
+  for (let r = 0; r < ROWS; r++) {
+    grid.push([]);
+    for (let c = 0; c < COLS; c++) {
+      const tl = P(r - 1, c - 1), tr = P(r - 1, c), bl = P(r, c - 1), br = P(r, c);
+      const dirs = [];
+      if (tl !== tr) dirs.push(0);
+      if (tr !== br) dirs.push(90);
+      if (bl !== br) dirs.push(180);
+      if (tl !== bl) dirs.push(270);
+      grid[r].push(dirs.length >= 2 ? [dirs[0], dirs[1]] : BLANK);
+    }
+  }
   return grid;
 }
 
@@ -251,7 +264,7 @@ const CHOREOS = {
 const CHOREO_NAMES = Object.keys(CHOREOS);
 
 // ─── Ablauf ───────────────────────────────────────────────────────────────
-const settings = { mode: 'aktiv', theme: 'white', h12: false };
+const settings = { mode: 'aktiv', theme: 'white', h12: false, colon: true };
 let forced = null, choreoIdx = 0;
 const statusEl = document.getElementById('status');
 
@@ -332,6 +345,7 @@ function renderUI() {
   sep();
   btn(settings.theme === 'white' ? 'Schwarz' : 'Weiß', () => { settings.theme = settings.theme === 'white' ? 'black' : 'white'; applyTheme(); save(); });
   btn(settings.h12 ? '24h' : '12h', () => { settings.h12 = !settings.h12; save(); });
+  btn(settings.colon ? 'Ohne :' : 'Mit :', () => { settings.colon = !settings.colon; save(); });
   btn('Vollbild', () => document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen?.());
 }
 function applyTheme() { document.documentElement.dataset.theme = settings.theme; readColors(); }

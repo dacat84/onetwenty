@@ -8,8 +8,8 @@ Inspiriert von *A million Times* von [Humans since 1982](https://www.humanssince
 
 ## Was es macht
 
-- Raster aus 8 × 15 Uhren mit je zwei Zeigern im Seitenverhältnis des Originals (212 × 121)
-- Die Zeiger formen die aktuelle Uhrzeit (HH:MM)
+- Raster aus 8 × 18 = 144 Uhren mit je zwei Zeigern
+- Die Zeiger formen die aktuelle Uhrzeit (HH:MM) in einer Konturschrift: jede Ziffer ist der Umriss eines 3 × 5-Pixel-Bitmaps, daher braucht jede Uhr genau zwei Zeiger
 - Zwischendurch laufen Choreografien: Welle, Wirbel, Diagonalen, Blüte, Schere
 
 ## Modi
