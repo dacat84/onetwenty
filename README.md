@@ -16,7 +16,7 @@ Inspiriert von *A million Times* von [Humans since 1982](https://www.humanssince
 
 | Modus | Verhalten |
 |---|---|
-| Aktiv | Uhrzeit, ab Sekunde 33 eine Choreografie, zur neuen Minute wieder die Uhrzeit |
+| Aktiv | Uhrzeit, ab Sekunde 27 eine Choreografie, zur neuen Minute wieder die Uhrzeit |
 | Demo | Choreografien laufen im Schnelldurchlauf hintereinander |
 | Minimal | Nur die Uhrzeit, ohne Choreografien |
 

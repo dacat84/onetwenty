@@ -92,7 +92,7 @@ ease.drift = bezier(.35, 0, .25, 1);
 
 // Bewegungscharakter – hier lässt sich das „Gefühl“ zentral nachjustieren
 const FEEL = {
-  tempo: 1.35,        // > 1 = alles langsamer
+  tempo: 1.9,         // > 1 = alles langsamer
   jitterDelay: 450,   // ms Zufallsversatz pro Zeiger
   jitterDur: .14,     // ± Anteil Zufallsstreuung der Dauer
   overshoot: 5,       // Grad, die ein Zeiger über das Ziel hinausschwingt (max.)
@@ -274,7 +274,7 @@ async function run() {
   await showTime({ dur: 3500 });
   while (true) {
     const sec = () => new Date().getSeconds();
-    if (settings.mode === 'aktiv') await waitUntil(() => sec() >= 33);
+    if (settings.mode === 'aktiv') await waitUntil(() => sec() >= 27);
     else if (settings.mode === 'demo') { const t = Date.now() + 5000; await waitUntil(() => Date.now() > t); }
     else { const m = new Date().getMinutes(); await waitUntil(() => new Date().getMinutes() !== m); }
 
