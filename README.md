@@ -48,6 +48,17 @@ Holz, Marmor, Rost, Kupfer, Grünspan, Beton und Sandstein werden beim Laden pro
 
 URL-Parameter: `?mode=demo`, `?theme=walnut`, `?program=geometrisch` usw.
 
+## Countdown & Einbettung
+
+`?countdown=2027-04-15` zeigt statt der Uhrzeit die verbleibenden Tage (zentriert, bis 4 Stellen).
+`?embed` blendet Bedienleiste und Hintergrund aus – gedacht für ein `<iframe>`; die Zeiger starten dann zufällig verstreut und finden sich zur Zahl zusammen. `?hold=9000` steuert, wie lange die Zahl steht, bevor eine Choreografie läuft.
+
+Beispiel (Countdown-Popup des [PCT Trackers](https://dacat84.github.io/pct-tracker/)):
+
+```
+https://dacat84.github.io/onetwenty/?countdown=2027-04-15&embed&theme=pct&program=geometrisch
+```
+
 ## Technik
 
 Eine einzige `index.html` mit Canvas und Vanilla JS, ohne Build-Schritt. Wird direkt über GitHub Pages ausgeliefert.

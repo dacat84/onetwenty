@@ -48,6 +48,11 @@
   #status { position: fixed; top: 12px; left: 16px; font-size: 12px; opacity: .55; }
   body.idle #status { opacity: 0; }
 
+  /* Einbettung (iframe) */
+  html.embed, html.embed body { background: transparent !important; }
+  html.embed #ui, html.embed #status { display: none !important; }
+  html.embed canvas { box-shadow: none !important; outline: none !important; border-radius: 0 !important; }
+
   /* Neobrutalismus */
   :root[data-ui="neo"] { --ui-bg: #fff; --ui-fg: #111; --accent: #8f5cf6; --accent-fg: #fff; }
   :root[data-ui="neo"] canvas { outline: 5px solid #111; border-radius: 4px; box-shadow: 14px 14px 0 #111; }
@@ -69,6 +74,16 @@
 <div id="ui"></div>
 
 <script>
+// ─── Einbettung / Countdown ───────────────────────────────────────────────
+// ?countdown=JJJJ-MM-TT  zeigt die verbleibenden Tage statt der Uhrzeit
+// ?embed                 ohne Bedienleiste, transparenter Hintergrund (für iframes)
+// ?hold=9000             wie lange die Zahl steht, bevor eine Choreografie läuft (ms)
+const QP = new URLSearchParams(location.search);
+const COUNTDOWN = QP.get('countdown') ? new Date(QP.get('countdown') + 'T00:00:00') : null;
+const EMBED = QP.has('embed');
+const HOLD = +QP.get('hold') || 9000;
+if (EMBED) document.documentElement.classList.add('embed');
+
 // ─── Grundgrößen ──────────────────────────────────────────────────────────
 const ROWS = 8, COLS = 18;               // 8 × 18 = 144 Uhren
 const PANEL_W = COLS + .8, PANEL_H = ROWS + .8;  // Seitenverhältnis folgt dem Raster
@@ -110,7 +125,10 @@ const rand = (a, b) => a + Math.random() * (b - a);
 const clocks = [];
 for (let r = 0; r < ROWS; r++) {
   clocks.push([]);
-  for (let c = 0; c < COLS; c++) clocks[r].push([{ a: 225, tw: null }, { a: 225, tw: null }]);
+  for (let c = 0; c < COLS; c++) {
+    const a0 = EMBED ? Math.random() * 360 : 225, a1 = EMBED ? Math.random() * 360 : 225;
+    clocks[r].push([{ a: a0, tw: null }, { a: a1, tw: null }]);
+  }
 }
 const forEachClock = fn => { for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) fn(r, c, clocks[r][c]); };
 
@@ -259,14 +277,22 @@ const DIGIT_X = [0, 4, 10, 14];                 // Pixelspalte jeder Ziffer (sym
 const COLON = [[2, 8], [4, 8]];                 // zwei Punkte als kleine Quadrate
 const BLANK = [225, 225];
 
+const daysLeft = () => Math.max(0, Math.ceil((COUNTDOWN - new Date()) / 864e5));
+
 function timeLayout(date = new Date()) {
+  const px = Array.from({ length: PX_ROWS }, () => Array(PX_COLS).fill(0));
+  const put = (d, x) => FONT[d].forEach((row, r) => [...row].forEach((v, j) => { if (v === '1') px[r + 1][x + j] = 1; }));
+  if (COUNTDOWN) {
+    // Countdown: Tage, mittig gesetzt (bis 4 Stellen)
+    const str = String(Math.min(9999, daysLeft()));
+    const x0 = Math.floor((PX_COLS - (str.length * 4 - 1)) / 2);
+    [...str].forEach((d, i) => put(d, x0 + i * 4));
+    return outline(px);
+  }
   let h = date.getHours(); const m = date.getMinutes();
   if (settings.h12) h = h % 12 || 12;
   const str = String(h).padStart(2, '0') + String(m).padStart(2, '0');
-  const px = Array.from({ length: PX_ROWS }, () => Array(PX_COLS).fill(0));
-  [...str].forEach((d, i) => FONT[d].forEach((row, r) => [...row].forEach((v, j) => {
-    if (v === '1') px[r + 1][DIGIT_X[i] + j] = 1;
-  })));
+  [...str].forEach((d, i) => put(d, DIGIT_X[i]));
   if (settings.colon) COLON.forEach(([r, c]) => px[r][c] = 1);
   return outline(px);
 }
@@ -536,7 +562,7 @@ async function run() {
   while (true) {
     const sec = () => new Date().getSeconds();
     if (settings.mode === 'aktiv') await waitUntil(() => sec() >= 27);
-    else if (settings.mode === 'demo') { const t = Date.now() + 5000; await waitUntil(() => Date.now() > t); }
+    else if (settings.mode === 'demo') { const t = Date.now() + (EMBED ? HOLD : 5000); await waitUntil(() => Date.now() > t); }
     else { const m = new Date().getMinutes(); await waitUntil(() => new Date().getMinutes() !== m); }
 
     if (settings.mode !== 'minimal' || forced) {
@@ -573,6 +599,7 @@ const THEMES = {
   white:     { label: 'Weiß',            ui: 'light', wall: '#d9d6cf', panel: '#ecebe6', face: { type: 'recess', fill: '#f4f3ef' }, hand: { c: '#161616' }, shade: 'rgba(60,50,35,.34)', light: 'rgba(255,255,255,.95)', handShadow: 'rgba(40,30,20,.10)' },
   black:     { label: 'Schwarz',         ui: 'dark',  wall: '#2a2a2a', panel: '#141414', face: { type: 'recess', fill: '#262626' }, hand: { c: '#f1f1f1' }, shade: 'rgba(0,0,0,.85)', light: 'rgba(255,255,255,.2)', handShadow: 'rgba(0,0,0,.55)' },
   neo:       { label: 'Neo',             ui: 'neo',   wall: '#ffd23f', panel: '#8f5cf6', face: { type: 'neo', fill: '#ffd23f', active: '#ffffff' }, hand: { c: '#111111', cap: 'square', w: 1.3 }, shade: '#111111' },
+  pct:       { label: 'PCT Tracker',     ui: 'neo',   wall: '#e8e5da', panel: '#2235d6', face: { type: 'neo', fill: '#fbf9f0', active: '#f5b301' }, hand: { c: '#141414', cap: 'square', w: 1.3 }, shade: '#141414' },
   neoPink:   { label: 'Neo Pink',        ui: 'neo',   wall: '#7cf0c5', panel: '#ff5fa2', face: { type: 'neo', fill: '#7cf0c5', active: '#ffffff' }, hand: { c: '#111111', cap: 'square', w: 1.3 }, shade: '#111111' },
   walnut:    { label: 'Nussbaum',        ui: 'dark',  wall: '#cbc2b4', tex: 'wood', ramp: ['#24130a', '#3e2314', '#5c3820', '#7a4f30', '#8d6140'], face: { type: 'recess', tint: 'rgba(0,0,0,.12)' }, hand: BRASS, shade: 'rgba(15,5,0,.75)', light: 'rgba(255,215,170,.28)', handShadow: 'rgba(0,0,0,.38)' },
   oak:       { label: 'Eiche',           ui: 'light', wall: '#ebe5da', tex: 'wood', ramp: ['#8f6b40', '#ab8553', '#c49f6b', '#d8b985', '#e6cc9d'], face: { type: 'recess', tint: 'rgba(80,40,0,.07)' }, hand: { c: '#1b1611', w: 1.2 }, shade: 'rgba(70,40,10,.5)', light: 'rgba(255,248,230,.7)', handShadow: 'rgba(50,25,0,.2)' },
@@ -684,7 +711,7 @@ let geo = {}, bg = null, activeSprite = null;
 
 function resize() {
   const dpr = Math.min(2, window.devicePixelRatio || 1);
-  const maxW = innerWidth * .94, maxH = innerHeight * .9;
+  const maxW = innerWidth * (EMBED ? 1 : .94), maxH = innerHeight * (EMBED ? 1 : .9);
   const w = Math.min(maxW, maxH * PANEL_W / PANEL_H), h = w * PANEL_H / PANEL_W;
   cv.style.width = w + 'px'; cv.style.height = h + 'px';
   cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
@@ -859,7 +886,8 @@ function applyTheme() {
   buildBackground();
 }
 function save() { try { localStorage.setItem('onetwenty', JSON.stringify(settings)); } catch (e) {} }
-try { Object.assign(settings, JSON.parse(localStorage.getItem('onetwenty') || '{}')); } catch (e) {}
+if (!EMBED) { try { Object.assign(settings, JSON.parse(localStorage.getItem('onetwenty') || '{}')); } catch (e) {} }
+else settings.mode = 'demo';
 const q = new URLSearchParams(location.search);
 if (q.get('mode')) settings.mode = q.get('mode');
 if (q.get('theme')) settings.theme = q.get('theme');
