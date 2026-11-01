@@ -10,7 +10,15 @@ Inspiriert von *A million Times* von [Humans since 1982](https://www.humanssince
 
 - Raster aus 8 × 18 = 144 Uhren mit je zwei Zeigern
 - Die Zeiger formen die aktuelle Uhrzeit (HH:MM) in einer Konturschrift: jede Ziffer ist der Umriss eines 3 × 5-Pixel-Bitmaps, daher braucht jede Uhr genau zwei Zeiger
-- Zwischendurch laufen Choreografien: Schwarm, Kaleidoskop, Strömung, Atem (kontinuierliche Strömungsfelder mit Perlin-Rauschen), Uhrwerk (alle Uhren zeigen kurz als echte Analoguhren die Zeit) sowie Welle, Wirbel, Diagonalen, Blüte, Schere
+- Zwischendurch laufen Choreografien, gruppiert in Programme (Aktiv-/Demo-Modus spielt nur das gewählte Programm):
+
+| Programm | Choreografien |
+|---|---|
+| Geometrisch | **Zahnräder** (je 4 Uhren bilden ein Achteck/Kreis; Ratschenbewegung, Nachbarn gegenläufig), **Ringe** (4 × 4-Blöcke mit großem und kleinem Kreis, gegenläufig verdrillt), **Inseln** (Umrisse wachsender und verschmelzender Inseln), **Spirale**, **Leben** (Conways Game of Life als Umrisse), **Zellen** (konzentrische Kreise um wandernde Keime) |
+| Organisch | **Schwarm**, **Magnetfeld** (Eisenspäne um wandernde Pole), **Kaleidoskop**, **Moiré** (zwei überlagerte Wirbel), **Strömung**, **Atem** |
+| Klassisch | Welle, Uhrwerk, Wirbel, Blüte, Schere, Diagonalen |
+
+Organische Muster sind kontinuierliche Strömungsfelder; die Zeiger folgen ihnen mit Trägheit und Höchstdrehzahl wie echte Schrittmotoren.
 
 ## Materialien
 
@@ -38,7 +46,7 @@ Holz, Marmor, Rost, Kupfer, Grünspan, Beton und Sandstein werden beim Laden pro
 | Demo | Choreografien laufen im Schnelldurchlauf hintereinander |
 | Minimal | Nur die Uhrzeit, ohne Choreografien |
 
-URL-Parameter: `?mode=demo`, `?theme=walnut` usw.
+URL-Parameter: `?mode=demo`, `?theme=walnut`, `?program=geometrisch` usw.
 
 ## Technik
 
