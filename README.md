@@ -48,6 +48,12 @@ Holz, Marmor, Rost, Kupfer, Grünspan, Beton und Sandstein werden beim Laden pro
 
 URL-Parameter: `?mode=demo`, `?theme=walnut`, `?program=geometrisch` usw.
 
+## Countdowns
+
+Im Aktiv- und Demo-Modus wechseln sich Choreografie und Countdown ab: Statt einer Choreografie formt sich jede zweite Runde die Zahl der Tage bis zu einem PCT-Starttag, darunter steht eine Beschriftung mit Datum. Die Termine rotieren, vergangene fallen automatisch weg. Über „▶ Abspielen“ lässt sich jeder Countdown direkt aufrufen, der Schalter „Countdowns“ blendet sie aus.
+
+Die Termine stehen oben im Skript in `COUNTDOWNS` (Datum + Beschriftung).
+
 ## Technik
 
 Eine einzige `index.html` mit Canvas und Vanilla JS, ohne Build-Schritt. Wird direkt über GitHub Pages ausgeliefert.
