@@ -48,9 +48,11 @@ Holz, Marmor, Rost, Kupfer, Grünspan, Beton und Sandstein werden beim Laden pro
 
 URL-Parameter: `?mode=demo`, `?theme=walnut`, `?program=geometrisch` usw.
 
-## PCT-Starts
+## Countdowns
 
-Der Button „PCT-Starts“ in der Bedienleiste zeigt nacheinander die Tage bis zu vier PCT-Starttagen (28.03., 17.04., 22.04. und 30.04.2027), jeweils mit Beschriftung und Datum unter der Platte; danach kehrt die Uhrzeit zurück. Vergangene Termine fallen automatisch weg. Die Termine stehen im Skript in `COUNTDOWNS`.
+Im Aktiv- und Demo-Modus wechseln sich Choreografie und Countdown ab: Statt einer Choreografie formt sich jede zweite Runde die Zahl der Tage bis zu einem PCT-Starttag, darunter steht eine Beschriftung mit Datum. Die Termine rotieren, vergangene fallen automatisch weg. Über „▶ Abspielen“ lässt sich jeder Countdown direkt aufrufen, der Schalter „Countdowns“ blendet sie aus.
+
+Die Termine stehen oben im Skript in `COUNTDOWNS` (Datum + Beschriftung).
 
 ## Technik
 

@@ -568,8 +568,8 @@ const PROGRAM_LABELS = { alle: 'Alle', geometrisch: 'Geometrisch', organisch: 'O
 const CHOREO_NAMES = PROGRAMS.alle;
 
 // ─── Ablauf ───────────────────────────────────────────────────────────────
-const settings = { mode: 'aktiv', theme: 'white', h12: false, colon: true, program: 'alle' };
-let forced = null, choreoIdx = 0;
+const settings = { mode: 'aktiv', theme: 'white', h12: false, colon: true, program: 'alle', countdown: true };
+let forced = null, choreoIdx = 0, cdIdx = 0, cycle = 0;
 const statusEl = document.getElementById('status');
 
 async function waitUntil(pred) { while (!pred() && !forced) await sleep(100); }
@@ -583,15 +583,16 @@ async function run() {
     else { const m = new Date().getMinutes(); await waitUntil(() => new Date().getMinutes() !== m); }
 
     if (settings.mode !== 'minimal' || forced) {
-      if (forced === 'starts') {
-        // Button „PCT-Starts“: alle kommenden Starttage nacheinander als Tageszahl
+      const cds = upcoming();
+      const pick = forced && forced.startsWith('cd:') ? COUNTDOWNS[+forced.slice(3)]
+        : !forced && settings.countdown && cds.length && cycle++ % 2 === 1 ? cds[cdIdx++ % cds.length] : null;
+      if (pick) {
+        // Countdown statt Choreografie: Tageszahl formt sich und steht bis zur neuen Minute
         forced = null;
-        for (const cd of upcoming()) {
-          clearGlow();
-          await showCountdown(cd);
-          const t = Date.now() + 6000; await waitUntil(() => Date.now() > t);
-          if (forced) break;
-        }
+        clearGlow();
+        await showCountdown(pick);
+        if (settings.mode === 'aktiv') await waitUntil(() => sec() < 30);
+        else { const t = Date.now() + 7000; await waitUntil(() => Date.now() > t); }
       } else {
         const list = PROGRAMS[settings.program] || CHOREO_NAMES;
         const name = forced || list[choreoIdx++ % list.length];
@@ -899,9 +900,16 @@ function renderUI() {
     for (const n of PROGRAMS[k]) { if (k === 'klassisch' && n === 'Diagonalen') continue; const o = document.createElement('option'); o.value = n; o.textContent = n; og.appendChild(o); }
     play.appendChild(og);
   }
+  const og = document.createElement('optgroup'); og.label = 'Countdowns';
+  COUNTDOWNS.forEach((cd, i) => {
+    if (daysUntil(cd.date) < 0) return;
+    const o = document.createElement('option'); o.value = 'cd:' + i;
+    o.textContent = (cd.label ? cd.label + ' · ' : '') + cd.date.split('-').reverse().join('.');
+    og.appendChild(o);
+  });
+  if (og.children.length) play.appendChild(og);
   play.onchange = () => { if (play.value) forced = play.value; play.value = ''; };
   ui.appendChild(play);
-  if (upcoming().length) btn('PCT-Starts', () => { forced = 'starts'; });
   sep();
   const sel = document.createElement('select'); sel.title = 'Material';
   for (const [k, t] of Object.entries(THEMES)) {
@@ -912,7 +920,7 @@ function renderUI() {
   ui.appendChild(sel);
   btn(settings.h12 ? '24h' : '12h', () => { settings.h12 = !settings.h12; save(); });
   btn(settings.colon ? 'Ohne :' : 'Mit :', () => { settings.colon = !settings.colon; save(); });
-
+  btn('Countdowns', () => { settings.countdown = !settings.countdown; save(); }, () => settings.countdown);
   btn('Vollbild', () => document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen?.());
 }
 function applyTheme() {
